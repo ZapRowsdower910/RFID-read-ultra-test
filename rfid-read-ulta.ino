@@ -75,9 +75,11 @@ void setup() {
 //    lcd.print("                   ");
 //    lcd.setCursor ( 0, 3 );        // go to the next line    
 //    lcd.print("                   ");
-    lcd.print(" TeaCrane v1.1  ");
-    lcd.setCursor ( 0, 1 );        // go to the next line
-    lcd.print ("Tea Time Bitches!");
+    lcd.print("TeaCrane v1.1  ");
+    lcd.setCursor( 0, 1 );        // go to the next line
+    lcd.print ("Tag Writer Test");
+    lcd.setCursor(0, 3);
+    lcd.print("Place tag to begin");
 }
 
 /**
@@ -94,9 +96,7 @@ void loop() {
 
     lcd.backlight();
     lcd.home();
-    lcd.print("Reading Card       ");
-    lcd.setCursor(0 , 1);
-    lcd.print("                   ");
+    lcd.clear();
 
     // Show some details of the PICC (that is: the tag/card)
     Serial.print(F("Card UID:"));
@@ -108,9 +108,7 @@ void loop() {
 
     // In this sample we use the second sector,
     // that is: sector #1, covering block #4 up to and including block #7
-    byte sector         = 1;
-    byte blockAddr      = 4;
-    byte trailerBlock   = 7;
+    byte blockAddr = 4;    
     byte status;
     byte buffer[18];
     byte size = sizeof(buffer);
@@ -125,18 +123,59 @@ void loop() {
     }
     Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
     
-    dump_byte_array(buffer, 16); Serial.println();
+    dump_byte_array(buffer, 8); Serial.println();
 
     Serial.println();
-//    buffer[16] = '\0';
-//    Serial.print("Hex to String: ");    Serial.println(String(*buffer));
 
-    Serial.write(buffer, 8);
+  char hex[25];
+  
+  Serial.println(sprintf(hex, "%c%c%c%c%c%c%c%c      ", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]));
+  Serial.println(hex);
 
-lcd.setCursor(0, 1);
-//lcd.print(printf("%s %s %s", buffer[0], buffer[1], buffer[2]));
-//lcd.print(printf("%s %s", buffer[0], buffer[1]));
+  lcd.home();
+  lcd.print("Name: ");
+  lcd.print(hex);
 
+    Serial.println();
+
+    blockAddr += 2;
+
+    Serial.print(F("Reading data from block ")); Serial.print(blockAddr);
+    Serial.println(F(" ..."));
+    status = mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("MIFARE_Read() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+    }
+    Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
+    
+    dump_byte_array(buffer, 8); Serial.println();
+
+    Serial.println();
+
+    Serial.println(sprintf(hex, "%c%c%c%c%c%c%c%c      ", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]));
+    Serial.println(hex);
+
+    lcd.setCursor(0, 1);
+    lcd.print("Tea Type: ");
+    lcd.print(hex);
+//    lcd.print();
+
+    blockAddr++;
+
+    Serial.print(F("Reading data from block ")); Serial.print(blockAddr);
+    Serial.println(F(" ..."));
+    status = mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("MIFARE_Read() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+    }
+    Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
+    
+    dump_byte_array(buffer, 4); Serial.println();
+
+    Serial.write(buffer, 4);
+    Serial.println();
 
     Serial.println();
 
@@ -145,9 +184,11 @@ lcd.setCursor(0, 1);
     // Stop encryption on PCD
     mfrc522.PCD_StopCrypto1();
 
-    delay(1000);
+    delay(5000);
     lcd.clear();
-    lcd.noBacklight();
+    lcd.home();
+    lcd.print("Waiting for card");
+//    lcd.noBacklight();
 }
 
 /**
